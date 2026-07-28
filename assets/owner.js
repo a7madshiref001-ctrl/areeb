@@ -91,7 +91,15 @@
 
   /* ---------------- ١) الرئيسية ---------------- */
   function home() {
-    $("hAdd").textContent = money(o.addedMoney);
+    /* الكارت الكبير = إجمالي المبيعات في الفترة المختارة،
+       والسطر اللي تحته بيوضّح كام منها جابها السيستم لوحده */
+    $("hLb").textContent = days === 30 ? "إجمالي المبيعات الشهرية"
+      : "إجمالي المبيعات — آخر " + (days === 7 ? "٧ أيام" : "٩٠ يوم");
+    $("hRev").textContent = money(o.revenue);
+    var share = o.revenue ? Math.round(o.addedMoney / o.revenue * 100) : 0;
+    $("hD").innerHTML = dt(o.revenue, prev.revenue) +
+      '<br>منها <b>' + money(o.addedMoney) + ' ر.س</b> (' + share + '٪) من الاقتراحات والإضافات ' +
+      'اللي المنيو عرضها لوحده على العميل — شي المنيو المطبوع ما يسويه.';
     $("kVis").textContent = money(o.visits);
     $("kVisD").innerHTML = dt(o.visits, prev.visits);
     $("kOrd").textContent = money(o.orders);
