@@ -86,12 +86,13 @@ svg.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;
   clip-path:inset(-12% -8% -12% 100%);filter:blur(6px);
   animation:writeIn 1s cubic-bezier(.65,0,.35,1) .15s forwards}
 @keyframes writeIn{to{clip-path:inset(-12% -8% -12% -8%);filter:blur(0)}}
-.sp-tag{display:flex;align-items:center;gap:14px;color:var(--mut);
-  font-size:15px;letter-spacing:6px;font-weight:500;opacity:0;
+.sp-tag{display:flex;align-items:center;gap:13px;color:var(--mut);
+  font-size:13px;letter-spacing:5.5px;font-weight:500;opacity:0;
+  margin-top:clamp(8px,1.8vw,16px);
   animation:fadeUp .7s ease 1.25s forwards}
 .sp-tag::before,.sp-tag::after{content:"";height:1px;width:0;background:var(--br);
   animation:lineGrow .7s ease 1.35s forwards}
-@keyframes lineGrow{to{width:44px}}
+@keyframes lineGrow{to{width:40px}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .sp-hint{position:absolute;bottom:34px;color:var(--mut);font-size:12px;opacity:0;
   animation:fadeUp .6s ease 1.9s forwards}
@@ -142,9 +143,9 @@ body.go #hero .an:nth-child(6){transition-delay:.66s}
   -webkit-background-clip:text;background-clip:text;
   color:transparent;-webkit-text-fill-color:transparent;
   will-change:transform,opacity}
-.tagline{display:flex;align-items:center;gap:14px;color:var(--mut);letter-spacing:7px;
-  font-size:15px;font-weight:500;margin-top:4px}
-.tagline::before,.tagline::after{content:"";height:1px;width:46px;background:linear-gradient(90deg,transparent,var(--br))}
+.tagline{display:flex;align-items:center;gap:13px;color:var(--mut);letter-spacing:6px;
+  font-size:13px;font-weight:500;margin-top:clamp(16px,2.8vw,28px)}
+.tagline::before,.tagline::after{content:"";height:1px;width:40px;background:linear-gradient(90deg,transparent,var(--br))}
 .tagline::after{background:linear-gradient(270deg,transparent,var(--br))}
 
 .hero-cta{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;justify-content:center}
@@ -376,7 +377,7 @@ footer .fw{font-family:var(--fd);font-weight:700;font-size:44px;line-height:1.15
   background:linear-gradient(180deg,var(--deep),var(--br));
   -webkit-background-clip:text;background-clip:text;
   color:transparent;-webkit-text-fill-color:transparent}
-footer .ft{font-size:12.5px;letter-spacing:4px;margin-top:2px}
+footer .ft{font-size:11.5px;letter-spacing:5px;margin-top:14px}
 .flinks{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:20px}
 .flinks a{display:inline-flex;align-items:center;gap:7px;padding:9px 17px;
   border:1px solid var(--line);border-radius:100px;color:var(--ink);
