@@ -13,7 +13,7 @@
     cus: "areeb.customers.v1",
     loy: "areeb.loyalty.v1",
     ctl: "areeb.control.v1",
-    seed: "areeb.seeded.v1",
+    seed: "areeb.seeded.v2",
     cart: "areeb.cart.v1",
     cid: "areeb.cid.v1",
     theme: "areeb.theme.v1",
@@ -107,12 +107,17 @@
     return pool[pool.length - 1];
   }
 
-  /* ---------------- توليد بيانات عرض (٩٠ يوم) ---------------- */
+  /* ---------------- توليد بيانات عرض ----------------
+     كافيه شغّال: ~٨٥ فتحة منيو/يوم، ~٣٢ طلب/يوم، متوسط فاتورة ~٧٠ ر.س
+     (الطلب بييجي من الطاولة كلها مش من شخص، عشان كده الفاتورة كبيرة).
+     الأحداث المخزّنة اتقلّلت لأقل حاجة الداشبورد بتقراها — عشان ما نكسرش
+     حدّ الـlocalStorage (٥ ميجا) وإحنا بنكبّر الأرقام.
+     ------------------------------------------------- */
   var HOUR_W = [.05,.03,.02,.02,.02,.03,.15,.5,1.4,2.6,3.4,3.1,2.6,2.4,2.2,2.3,2.8,3.6,4.4,4.8,4.2,3.1,1.6,.5];
   var DOW_W  = [1, .82, .84, .9, 1.1, 1.5, 1.4];   // الأحد..السبت
 
   function seedDemo(days) {
-    days = days || 90;
+    days = days || 62;
     var pool = ITEMS.map(function (r) { return { r: r, w: weightOf(r) }; });
     var totalW = pool.reduce(function (a, b) { return a + b.w; }, 0);
     var rnd = rngFrom(20260722);
@@ -130,12 +135,13 @@
       });
     }
 
+    var vc = 0;                                        // عدّاد قصير للزيارة
     for (var d = days - 1; d >= 0; d--) {
       var day = new Date(now.getTime() - d * 86400000);
       var dowW = DOW_W[day.getDay()];
       // نمو خفيف مع الوقت (الأسابيع الأخيرة أعلى) — بيدّي إحساس بالاتجاه
       var growth = 0.85 + (days - d) / days * 0.3;
-      var visits = Math.round((40 + rnd() * 22) * dowW * growth);
+      var visits = Math.round((70 + rnd() * 30) * dowW * growth);
 
       for (var v = 0; v < visits; v++) {
         var hTot = HOUR_W.reduce(function (a, b) { return a + b; }, 0);
@@ -144,44 +150,50 @@
         var t = new Date(day); t.setHours(hr, Math.floor(rnd() * 60), 0, 0);
         if (t > now) continue;
         var ts = t.getTime();
-        var vid = "v" + ts + "_" + v;
+        var vid = "v" + (vc++).toString(36);
 
         evs.push({ t: ts, e: "visit", vid: vid, demo: 1 });
-        if (rnd() < 0.21) continue;                    // فتح وخرج
+        if (rnd() < 0.15) continue;                    // فتح وخرج
 
-        var views = 1 + Math.floor(rnd() * 4), seen = [];
+        var views = 1 + Math.floor(rnd() * 3), seen = [];
         for (var k = 0; k < views; k++) {
           var pick = pickWeighted(rnd, pool, totalW).r;
           seen.push(pick);
-          evs.push({ t: ts + k * 40000, e: "item_view", vid: vid, n: pick.n, sec: pick.sec, p: pick.price, demo: 1 });
+          evs.push({ t: ts + k * 40000, e: "item_view", vid: vid, n: pick.n, sec: pick.sec, demo: 1 });
         }
 
-        if (rnd() < 0.37 && seen.length) {
-          var main = seen[Math.floor(rnd() * seen.length)];
-          var lines = [{ n: main.n, p: main.price, q: 1, sec: main.sec }];
-          evs.push({ t: ts + 200000, e: "add_cart", vid: vid, n: main.n, sec: main.sec, p: main.price, demo: 1 });
+        if (rnd() < 0.55 && seen.length) {
+          /* الطلب بييجي من الطاولة كلها: ٢–٥ أصناف + حلا أحيانًا */
+          var lines = [], nMain = 2 + Math.floor(rnd() * 4), main = null;
+          for (var mi = 0; mi < nMain; mi++) {
+            var it = mi === 0 ? seen[Math.floor(rnd() * seen.length)]
+                              : pickWeighted(rnd, pool, totalW).r;
+            if (mi === 0) main = it;
+            var q = (mi === 0 && rnd() < 0.28) ? 2 : 1;
+            lines.push({ n: it.n, p: it.price, q: q, sec: it.sec });
+          }
+          evs.push({ t: ts + 200000, e: "add_cart", vid: vid, demo: 1 });
+          evs.push({ t: ts + 205000, e: "upsell_shown", vid: vid, demo: 1 });
 
-          evs.push({ t: ts + 205000, e: "upsell_shown", vid: vid, n: main.n, demo: 1 });
           var upRev = 0;
-          if (rnd() < 0.43) {
+          if (rnd() < 0.46) {
             var pr = (w.SALES.pairings[main.sec] || w.SALES.pairings._default);
             var sug = BYNAME[pr[Math.floor(rnd() * pr.length)]];
             if (sug) {
               lines.push({ n: sug.n, p: sug.price, q: 1, sec: sug.sec, up: 1 });
               upRev += sug.price;
-              evs.push({ t: ts + 210000, e: "upsell_accept", vid: vid, n: sug.n, p: sug.price, demo: 1 });
+              evs.push({ t: ts + 210000, e: "upsell_accept", vid: vid, demo: 1 });
             }
           }
           var adRev = 0;
-          if (rnd() < 0.33) {
+          if (rnd() < 0.38) {
             var ads = addonsOf(main.sec);
             var ad = ads[Math.floor(rnd() * ads.length)];
             adRev += ad.p;
             lines.push({ n: "إضافة " + ad.n, p: ad.p, q: 1, sec: main.sec, addon: 1 });
-            evs.push({ t: ts + 215000, e: "addon_add", vid: vid, n: ad.n, p: ad.p, demo: 1 });
           }
 
-          if (rnd() < 0.64) {
+          if (rnd() < 0.8) {
             var total = lines.reduce(function (a, l) { return a + l.p * l.q; }, 0);
             orders.push({
               id: "D" + (ts % 100000), t: ts + 260000, lines: lines, total: total,
@@ -190,7 +202,6 @@
               table: 1 + Math.floor(rnd() * w.SALES.order.tables),
               demo: 1
             });
-            evs.push({ t: ts + 260000, e: "order", vid: vid, v: total, up: upRev, ad: adRev, demo: 1 });
 
             if (rnd() < 0.24) {
               var st = rnd() < 0.76 ? 5 : (rnd() < 0.62 ? 4 : (rnd() < .6 ? 3 : 2));
@@ -213,7 +224,17 @@
       }
     }
     evs.sort(function (a, b) { return a.t - b.t; });
-    set(K.ev, evs); set(K.ord, orders); set(K.rev, reviews); set(K.cus, customers);
+
+    /* نفضّي القديم الأول عشان ما نزاحمش الحد، وبعدين نكتب.
+       لو المتصفح رفض (الحد ٥ ميجا) بنقص من أقدم الأحداث ونعيد. */
+    [K.ev, K.ord, K.rev, K.cus].forEach(function (k) {
+      try { localStorage.removeItem(k); } catch (e) { }
+    });
+    set(K.ord, orders); set(K.rev, reviews); set(K.cus, customers);
+    for (var tries = 0; tries < 5; tries++) {
+      if (set(K.ev, evs)) break;
+      evs = evs.slice(Math.floor(evs.length * 0.3));   // اقطع أقدم ٣٠٪
+    }
     set(K.seed, { at: Date.now(), days: days });
   }
 
@@ -464,7 +485,7 @@
     money: money, esc: esc, offerLive: offerLive, priceOf: priceOf, cid: cid,
     ensureSeed: function () {
       buildIndex();
-      if (!get(K.seed, null)) seedDemo(90);
+      if (!get(K.seed, null)) seedDemo(62);
     },
     reset: function () {
       Object.keys(K).forEach(function (k) { if (k !== "theme") localStorage.removeItem(K[k]); });

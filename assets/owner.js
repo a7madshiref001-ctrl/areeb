@@ -94,7 +94,7 @@
     /* الكارت الكبير = إجمالي المبيعات في الفترة المختارة،
        والسطر اللي تحته بيوضّح كام منها جابها السيستم لوحده */
     $("hLb").textContent = days === 30 ? "إجمالي المبيعات الشهرية"
-      : "إجمالي المبيعات — آخر " + (days === 7 ? "٧ أيام" : "٩٠ يوم");
+      : "إجمالي المبيعات — آخر " + (days === 7 ? "٧ أيام" : "٦٠ يوم");
     $("hRev").textContent = money(o.revenue);
     var share = o.revenue ? Math.round(o.addedMoney / o.revenue * 100) : 0;
     $("hD").innerHTML = dt(o.revenue, prev.revenue) +
@@ -467,7 +467,7 @@
     print: function () { w.print(); },
     reseed: function () {
       if (!confirm("بيتعاد توليد بيانات العرض (٩٠ يوم). تمام؟")) return;
-      F.reset(); F.buildIndex(); F.seedDemo(90); render();
+      F.reset(); F.buildIndex(); F.seedDemo(62); render();
     },
     reset: function () {
       if (!confirm("بينمسح كل شي — الطلبات والتقييمات والأرقام. متأكد؟")) return;
